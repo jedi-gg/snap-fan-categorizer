@@ -64,6 +64,12 @@ def get_series_counts(card_ids: list[str], gdc: GameDataCache):
             counts[series] = counts[series] + 1
     return counts
 
+def get_subset_counts(deck: list[str], subset: list[str]):
+    count = 0
+    for card in deck:
+        if card in subset:
+            count = count + 1
+    return count
 
 def categorize_elastic_search_deck(deck: MatchPlayerRecord, gdc: GameDataCache):
     card_ids = []
@@ -174,7 +180,7 @@ def categorize_deck_12_12_inner(cards: list[str], gdc: GameDataCache):
     if 'HighEvolutionary' in cards and ('Storm' in cards or 'SpiderMan' in cards):
         return 'High Evo Control'
     if 'HighEvolutionary' in cards and 'SheHulk' in cards and 'Infinaut' in cards:
-        return 'High Evo'
+        return 'High Evo Shenaut'
     if 'HighEvolutionary' in cards:
         return 'High Evo'
     if 'ThePhoenixForce' in cards:
@@ -223,8 +229,8 @@ def categorize_deck_12_12_inner(cards: list[str], gdc: GameDataCache):
         return 'Shenaut'
     if 'Patriot' in cards and 'IronLad' in cards:
         return 'Patriot Lad'
-    if 'Patriot' in cards and 'Mystique' in cards and 'Ultron' in cards and 'KaZar' in cards and ('Debrii' in cards or 'GreenGoblin' in cards):
-        return 'Disruptron'
+    if 'Patriot' in cards and 'Ultron' in cards:
+        return 'Ultron Patriot'
     if 'Loki' in cards and 'Beast' in cards:
         return 'Loki Bounce'
     if 'Loki' in cards:
@@ -233,8 +239,6 @@ def categorize_deck_12_12_inner(cards: list[str], gdc: GameDataCache):
         return 'Destroy Galactus'
     if 'MrNegative' in cards and 'Galactus' in cards:
         return 'Negative Galactus'
-    if 'Nimrod' in cards and 'Galactus' in cards:
-        return 'Nimrod Galactus'
     has_destroyer = 'Destroyer' in cards
     if has_destroyer and 'Nimrod' in cards:
         return 'Nimrod Destroyer'
@@ -250,8 +254,6 @@ def categorize_deck_12_12_inner(cards: list[str], gdc: GameDataCache):
         return 'Big Venom'
     if 'Shuri' in cards and ('ArnimZola' in cards or 'Taskmaster' in cards):
         return 'Shuri Clone'
-    if 'Zero' in cards and ('RedSkull' in cards and 'TyphoidMary' in cards or 'Lizard' in cards):
-        return 'Zero'
     if 'Destroyer' in cards:
         return 'Generic Destroyer'
     if 'DevilDinosaur' in cards and 'Daredevil' in cards:
@@ -272,10 +274,7 @@ def categorize_deck_12_12_inner(cards: list[str], gdc: GameDataCache):
         return 'Invis Hela'
     if 'Killmonger' in cards and 'ShangChi' in cards and 'Enchantress' in cards:
         return 'Control'
-    has_beast_falcon = 'Beast' in cards and 'Falcon' in cards
-    if has_beast_falcon and 'KittyPryde' in cards:
-        return 'Kitty Bounce'
-    if has_beast_falcon:
+    if 'Beast' in cards and 'Falcon' in cards:
         return 'Bounce'
     if 'SilverSurfer' in cards and 3 in cost_counts and cost_counts[3] >= 4:
         return 'Surfer'
@@ -287,7 +286,8 @@ def categorize_deck_12_12_inner(cards: list[str], gdc: GameDataCache):
         return 'Dracula'
     if 'Heimdall' in cards and ('Vulture' in cards or 'HumanTorch' in cards or 'Kraven' in cards or 'MultipleMan' in cards):
         return 'Movement'
-    if 'GreenGoblin' in cards and 'Debrii' in cards and 'Viper' in cards and ('Hood' in cards or 'BlackWidow' in cards):
+    junk_count = get_subset_counts(cards, ['GreenGoblin', 'Debrii', 'Viper', 'Hood', 'BlackWidow', 'WhiteWidow'])
+    if junk_count >= 4
         return 'Junk'
     if 'KaZar' in cards and not 'Spectrum' in cards:
         return 'KaZoo'
@@ -303,18 +303,23 @@ def categorize_deck_12_12_inner(cards: list[str], gdc: GameDataCache):
         return 'Odin Reveal'
     if 'Odin' in cards and 'On Reveal' in ability_counts and ability_counts['On Reveal'] >= 2 and not has_series_3 and not has_series_2:
         return 'Odin Reveal'
-    if 'BuckyBarnes' in cards and ('Carnage' in cards or 'Deathlok' in cards or 'Venom' in cards):
-        return 'Generic Self Destroy'
+    destroy_count = get_subset_counts(cards, ['Carnage', 'Deathlok', 'Venom', 'Deadpool', 'BuckyBarnes', 'Knull', 'NicoMinoru'])
+    if 'Death' in cards and destroy_count >= 3:
+        return 'Destroy'
     has_patriot = 'Patriot' in cards
-    advanced_patriot_cards = ['SquirrelGirl','Doom','Debrii','Mysterio','Ultron']
-    patriot_advanced_count = 0
-    for card in advanced_patriot_cards:
-        if card in cards:
-            patriot_advanced_count = patriot_advanced_count + 1
+    patriot_advanced_count = get_subset_counts(cards, ['SquirrelGirl','Doom','Debrii','Mysterio','Ultron'])
     if has_patriot and patriot_advanced_count >= 2:
         return 'Advanced Patriot'
     if has_patriot and 'No Ability' in ability_counts and ability_counts['No Ability'] >= 2:
         return 'Generic Patriot'
+    angela_soup_count = get_subset_counts(cards, ['Angela', 'Thena', 'KittyPryde', 'HopeSummers'])
+    if angela_soup_count >= 3:
+        return 'Angela Soup'
+    big_boys_count = get_subset_counts(cards, ['Attuma', 'Crossbones', 'CullObsidian', 'Mockingbird', 'Sasquatch', 'Armor', 'SquirrelGirl'])
+    if 'Skaar' in cards and big_boys_count >= 4:
+        return 'Big Boys'
+    if 'Ajax' in cards and ('Hazmat' in cards or 'ManThing' in cards):
+        return 'Ajax Afflict'
     if 'Zabu' in cards:
         return 'Generic Zabu'
     if 'Galactus' in cards:
